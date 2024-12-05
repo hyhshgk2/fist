@@ -157,9 +157,65 @@
             color: #333;
             line-height: 1.5;
         }
+
+        /* 防止图片操作样式 */
+        .exp-image {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-user-drag: none;
+            -webkit-touch-callout: none;
+            pointer-events: auto;
+        }
+
+        /* 加载提示样式 */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-progress {
+            width: 300px;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .loading-bar {
+            height: 100%;
+            background: #4CAF50;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .loading-text {
+            font-size: 16px;
+            color: #333;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
+    <div id="loading-screen" class="loading-screen" style="display: none;">
+        <h2>资源加载中...</h2>
+        <div class="loading-progress">
+            <div id="loading-bar" class="loading-bar"></div>
+        </div>
+        <div id="loading-text" class="loading-text">0%</div>
+    </div>
+
     <!-- 信息输入界面 -->
     <div id="info-screen" class="screen active">
         <h2>参与者信息</h2>
@@ -262,10 +318,83 @@
                 this.totalScore = 0;          // 初始化总分
                 this.totalTime = 0;           // 初始化总时间
                 this.trialStartTime = null;   // 添加试次开始时间
+                this.imageUrls = new Set();
+                this.loadedCount = 0;
+                this.totalCount = 0;
+                this.correctCombinationsUsed = new Set(); // 添加记录已使用正确组合的属性
             }
 
-            initialize(participantInfo) {
+            // 收集所有图片URL
+            collectImageUrls() {
+                phases.forEach(phase => {
+                    const imageFolder = phase.name.startsWith('demo') || phase.name.startsWith('norm') ? 'show' : 'test';
+                    for (let i = 1; i <= phase.images; i++) {
+                        this.imageUrls.add(`image/${imageFolder}/${phase.name}_image_${i}.png`);
+                        this.imageUrls.add(`image/${imageFolder}/${phase.name}_image_${i}.jpg`);
+                    }
+                });
+                this.totalCount = this.imageUrls.size;
+            }
+
+            // 预加载单个图片
+            preloadImage(url) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        this.loadedCount++;
+                        this.updateProgress();
+                        resolve(url);
+                    };
+                    img.onerror = () => {
+                        // 如果PNG加载失败，尝试JPG
+                        if (url.endsWith('.png')) {
+                            resolve(url); // 不计入失败
+                        } else {
+                            this.loadedCount++;
+                            this.updateProgress();
+                            resolve(url);
+                        }
+                    };
+                    img.src = url;
+                });
+            }
+
+            // 更新加载进度
+            updateProgress() {
+                const progress = (this.loadedCount / this.totalCount) * 100;
+                const loadingBar = document.getElementById('loading-bar');
+                const loadingText = document.getElementById('loading-text');
+                
+                loadingBar.style.width = `${progress}%`;
+                loadingText.textContent = `${Math.round(progress)}%`;
+            }
+
+            // 开始预加载所有图片
+            async preloadAllImages() {
+                const loadingScreen = document.getElementById('loading-screen');
+                loadingScreen.style.display = 'flex';
+                
+                this.collectImageUrls();
+                const loadPromises = Array.from(this.imageUrls).map(url => this.preloadImage(url));
+                
+                try {
+                    await Promise.all(loadPromises);
+                    loadingScreen.style.display = 'none';
+                    return true;
+                } catch (error) {
+                    console.error('预加载失败:', error);
+                    loadingScreen.style.display = 'none';
+                    return false;
+                }
+            }
+
+            async initialize(participantInfo) {
+                // 先进行预加载
+                await this.preloadAllImages();
+                
+                // 设置参与者信息
                 this.participantInfo = participantInfo;
+                
                 this.startTime = Date.now();
                 this.trialStartTime = Date.now();  // 初始化试次开始时间
                 this.currentPhase = 'demo1';
@@ -276,7 +405,10 @@
                 this.totalScore = 0;
                 this.totalTime = 0;
                 this.updateDisplay();
+                this.correctCombinationsUsed = new Set();
             }
+
+
         
 
             recordTrial(imageId, correct) {
@@ -511,16 +643,13 @@
             showInstructions() {
                 const instruction = document.getElementById('instruction');
                 
-                if (this.currentTrial === 0) {
-                    if (this.currentPhase === 'demo1') {
-                        instruction.innerHTML = this.currentPhase === 'test' ?
-                            '第一组 - 测试阶段<br>请从这些图案中选择一个' :
-                            '第一组 - 备选阶段<br>让我们再试一次：<br>请从这些图案中选择一个';
-                    } else {
-                        instruction.innerHTML = `第 ${this.currentPhase} 组 - ${this.currentPhase === 'test' ? '测试' : '备选'}阶段<br>请从这些图案中选择一个`;
-                    }
+                // 基于组合次数显示不同的指导语
+                if (this.combinationCount === 0) {
+                    // 第一次选择的提示
+                    instruction.innerHTML = '请选择两张你认为在某些方面一样的卡片';
                 } else {
-                    instruction.innerHTML = '请选择一个没有选择过的图案';
+                    // 第二次选择的提示，添加红色字体
+                    instruction.innerHTML = '<span style="color: red;">请你再选择两张，在另外方面一样的卡片</span>';
                 }
             }
 
@@ -528,39 +657,44 @@
                 const container = document.getElementById('image-container');
                 container.innerHTML = '';
                 
-                // 确定图片所在文件夹
                 const imageFolder = this.currentPhase.startsWith('demo') || 
-                                   this.currentPhase.startsWith('norm') ? 'show' : 'test';
+                                  this.currentPhase.startsWith('norm') ? 'show' : 'test';
             
                 const phase = phases.find(p => p.name === this.currentPhase);
                 
                 for (let i = 1; i <= phase.images; i++) {
                     const img = document.createElement('img');
-                    // 添加.png扩展名
                     const baseImagePath = `image/${imageFolder}/${this.currentPhase}_image_${i}.png`;
                     
                     img.src = baseImagePath;
                     img.className = 'exp-image';
                     img.dataset.index = i;
                     
-                    // 添加图片加载错误处理
+                    // 添加错误处理和事件监听
                     img.onerror = function() {
-                        // 如果.png加载失败，尝试.jpg
                         this.src = this.src.replace('.png', '.jpg');
-                        
-                        // 如果.jpg也加载失败
                         this.onerror = function() {
                             console.error(`Failed to load image: ${this.src}`);
-                            this.src = 'image/error.png'; // 可以设置一个默认的错误图片
+                            this.src = 'image/error.png';
                         }
                     };
                     
-                    img.onclick = (e) => this.handleImageClick(e);
+                    // 修改事件绑定
+                    img.onclick = (e) => {
+                        e.preventDefault();
+                        this.handleImageClick(e);
+                    };
+                    
+                    img.ondragstart = (e) => {
+                        e.preventDefault();
+                    };
+                    
                     container.appendChild(img);
                 }
             }
 
             handleImageClick(e) {
+                e.preventDefault(); // 阻止默认行为
                 const img = e.target;
                 if (this.selectedImages.includes(img.dataset.index)) return;
 
@@ -577,20 +711,31 @@
             processImageCombination() {
                 const phase = phases.find(p => p.name === this.currentPhase);
                 const combination = this.selectedImages.sort().join('&');
-                const isCorrect = phase.combinations.includes(combination);
-        
+                
+                // 获取当前可用的正确组合（排除已使用的）
+                const availableCombinations = phase.combinations.filter(
+                    combo => !this.correctCombinationsUsed.has(combo)
+                );
+                
+                const isCorrect = availableCombinations.includes(combination);
+                
+                if (isCorrect) {
+                    this.correctCombinationsUsed.add(combination);
+                }
+                
                 this.recordTrial(combination, isCorrect);
-        
+                
                 document.querySelectorAll('.exp-image').forEach(img => 
                     img.classList.remove('selected'));
                 
                 this.selectedImages = [];
                 this.combinationCount++;
-        
+                
                 if (this.combinationCount === 2) {
                     this.combinationCount = 0;
                     this.currentTrial++;
-        
+                    this.correctCombinationsUsed.clear(); // 清除已使用组合记录，准备下一个试次
+                    
                     if (this.currentTrial === phase.trials) {
                         this.advancePhase();
                     }
@@ -689,7 +834,7 @@
         }
 
         // 表单提交处理
-        document.getElementById('info-form').addEventListener('submit', function(e) {
+        document.getElementById('info-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const info = {
                 name: document.getElementById('name').value,
@@ -698,7 +843,7 @@
                 class: document.getElementById('class').value,
                 kindergarten: document.getElementById('kindergarten').value
             };
-            experimentManager.initialize(info);
+            await experimentManager.initialize(info);
             showScreen('intro-screen');
         });
 
