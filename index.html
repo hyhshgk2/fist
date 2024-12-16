@@ -475,7 +475,7 @@
                     XLSX.utils.book_append_sheet(wb, wsSummary, "汇总数据");
             
                     // 生成文件名
-                    const fileName = `结果_${this.participantInfo.name}_${new Date().getTime()}.xlsx`;
+                    const fileName = `认知灵活性实验_${this.participantInfo.name}_${this.participantInfo.birthday}_${this.participantInfo.kindergarten}.xlsx`;
                     
                     // 将工作簿转换为二进制格式
                     const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
@@ -649,7 +649,7 @@
                     instruction.innerHTML = '请选择两张你认为在某些方面一样的卡片';
                 } else {
                     // 第二次选择的提示，添加红色字体
-                    instruction.innerHTML = '<span style="color: red;">请你再选择两张，在另外方面一样的卡片</span>';
+                    instruction.innerHTML = '<span style="color: red;">请你再选择两张，在其他 方面一样的卡片</span>';
                 }
             }
 
@@ -762,6 +762,8 @@
                 } else {
                     this.totalTime = Date.now() - this.startTime;
                     showScreen('results-screen');
+                    // 添加：实验结束后自动触发导出
+                    setTimeout(() => this.exportToExcel(), 500);
                 }
             }
         }
