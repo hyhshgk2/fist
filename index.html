@@ -68,19 +68,19 @@
 
             flex-direction: column;
 
-            gap: 40px;
+            gap: 25px;
 
-            margin: 20px 0;
+            margin: 12px 0;
 
             align-items: center;
 
             background-color: #333;
 
-            padding: 15px;
+            padding: 8px;
 
             border-radius: 8px;
 
-            max-width: 700px;
+            max-width: 500px;
 
             margin-left: auto;
 
@@ -94,9 +94,9 @@
 
         .exp-image {
 
-            width: 600px;
+            width: 425px;
 
-            height: 120px;
+            height: 85px;
 
             cursor: pointer;
 
@@ -116,13 +116,13 @@
 
         .image-divider {
 
-            width: 794px;
+            width: 565px;
 
             height: 2px;
 
             background-color: #888;
 
-            margin: 15px 0;
+            margin: 8px 0;
 
         }
 
@@ -140,9 +140,9 @@
 
             width: 95%;
 
-            margin-bottom: 15px;
+            margin-bottom: 8px;
 
-            padding: 8px;
+            padding: 5px;
 
             border: 2px solid #555;
 
@@ -548,6 +548,184 @@
 
         }
 
+
+
+        /* 美化实验介绍界面 */
+
+        .intro-container {
+
+            max-width: 700px;
+
+            margin: 0 auto;
+
+            padding: 20px;
+
+            background-color: white;
+
+            border-radius: 10px;
+
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+
+        }
+
+
+
+        .intro-container h2 {
+
+            color: #2e7d32;
+
+            text-align: center;
+
+            margin-bottom: 25px;
+
+            font-size: 28px;
+
+            border-bottom: 2px solid #e0e0e0;
+
+            padding-bottom: 15px;
+
+        }
+
+
+
+        .intro-content {
+
+            padding: 10px 20px;
+
+        }
+
+
+
+        .welcome-text {
+
+            font-size: 20px;
+
+            color: #333;
+
+            text-align: center;
+
+            font-weight: bold;
+
+            margin-bottom: 20px;
+
+        }
+
+
+
+        .intro-description {
+
+            background-color: #f8f9fa;
+
+            padding: 20px;
+
+            border-radius: 8px;
+
+            margin-bottom: 20px;
+
+            border-left: 4px solid #4CAF50;
+
+        }
+
+
+
+        .intro-description p {
+
+            margin-top: 0;
+
+            font-weight: bold;
+
+            color: #333;
+
+        }
+
+
+
+        .intro-description ul {
+
+            padding-left: 15px;
+
+        }
+
+
+
+        .intro-description li {
+
+            margin-bottom: 12px;
+
+            line-height: 1.5;
+
+            list-style-type: none;
+
+            position: relative;
+
+            padding-left: 30px;
+
+        }
+
+
+
+        .intro-icon {
+
+            position: absolute;
+
+            left: 0;
+
+            font-style: normal;
+
+            font-size: 18px;
+
+        }
+
+
+
+        .intro-footer {
+
+            text-align: center;
+
+            margin-top: 30px;
+
+        }
+
+
+
+        .intro-footer p {
+
+            margin-bottom: 15px;
+
+            font-style: italic;
+
+            color: #555;
+
+        }
+
+
+
+        .intro-btn {
+
+            min-width: 150px;
+
+            font-size: 16px;
+
+            padding: 10px 20px;
+
+            background-color: #2e7d32;
+
+            transition: all 0.3s ease;
+
+        }
+
+
+
+        .intro-btn:hover {
+
+            background-color: #1b5e20;
+
+            transform: translateY(-2px);
+
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+
+        }
+
     </style>
 
 </head>
@@ -638,25 +816,43 @@
 
     <div id="intro-screen" class="screen">
 
-        <h2>实验介绍</h2>
+        <div class="intro-container">
 
-        <p>欢迎参加认知灵活性实验。在本实验中：</p>
+            <h2>实验介绍</h2>
 
-        <ul>
+            <div class="intro-content">
 
-            <li>你将看到一些图片，需要通过点击来组合它们</li>
+                <p class="welcome-text">欢迎参加认知灵活性实验</p>
 
-            <li>每个试次中，你需要进行两次图片组合</li>
+                <div class="intro-description">
 
-            <li>请仔细观察并点击你认为相关的图片对</li>
+                    <p>在本实验中，您将完成以下任务：</p>
 
-            <li>我们会先进行演示和练习，然后开始正式实验</li>
+                    <ul>
 
-        </ul>
+                        <li><i class="intro-icon">🖼️</i> 观察一系列图片，并通过点击来组合它们</li>
 
-        <p>准备好后，请点击下面的按钮开始。</p>
+                        <li><i class="intro-icon">🔍</i> 寻找两张在某些方面相似的卡片（如颜色、大小、图形或数量）</li>
 
-        <button class="btn" onclick="startDemo()">开始演示</button>
+                        <li><i class="intro-icon">👆</i> 仔细观察并点击您认为相关的图片对</li>
+
+                        <li><i class="intro-icon">🔄</i> 完成演示和练习环节，然后进入正式实验</li>
+
+                    </ul>
+
+                </div>
+
+            </div>
+
+            <div class="intro-footer">
+
+                <p>准备好后，请点击下面的按钮开始</p>
+
+                <button class="btn intro-btn" onclick="startDemo()">开始演示</button>
+
+            </div>
+
+        </div>
 
     </div>
 
